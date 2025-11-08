@@ -10,7 +10,7 @@ Transaccion::Transaccion()
     : id(""), cliente(nullptr), numeroCuenta(""), tipo(""), 
       monto(0.0), fecha(""), estado("Pendiente") {}
 
-// Constructor parametrizado
+// Constructor con parámetros
 Transaccion::Transaccion(string id, Cliente* cliente, string numeroCuenta,
                          string tipo, double monto)
     : id(id), cliente(cliente), numeroCuenta(numeroCuenta), 
@@ -77,7 +77,7 @@ string Transaccion::getEstado() const {
 // Para compatibilidad con código existente
 string Transaccion::getDuiCliente() const {
     if (cliente != nullptr) {
-        return cliente->getDui();  // Asumiendo que Cliente tiene getDui()
+        return cliente->getDui();  
     }
     return "";
 }
@@ -85,7 +85,7 @@ string Transaccion::getDuiCliente() const {
 // Generar ID único para transacción
 string Transaccion::generarId() {
     static int contador = 1000;
-    return "TXN" + to_string(contador++);
+    return "TRAN" + to_string(contador++);
 }
 
 // Obtener fecha actual
@@ -119,10 +119,16 @@ void Transaccion::mostrarInfo() const {
 
 // Validar si la transacción es válida
 bool Transaccion::esTransaccionValida() const {
-    return !id.empty() && 
+    if(!id.empty() && 
            cliente != nullptr && 
            !numeroCuenta.empty() && 
            !tipo.empty() && 
            monto > 0.0 && 
-           !fecha.empty();
+           !fecha.empty();){
+
+            return true;
+           }
+    
+    
+    return false;
 }

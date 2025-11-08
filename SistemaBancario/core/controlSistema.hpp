@@ -1,8 +1,8 @@
-#pragma once
 #include <iostream>
 #include <string>
-#include "ArbolB.hpp"      
-#include "Validaciones.hpp" 
+#include <stdio.h>
+#include "../Reporte/validacionUser.hpp"
+#include "../Roles/cliente.hpp"
 
 class ControlSistema {
 private:
@@ -10,6 +10,8 @@ private:
     bool sistemaActivo;
     std::string usuarioActual;
     bool esAdministrador;
+    Transaccion* transaccionActual;  
+    Cliente* clienteDestino;
 
 public:
     // Constructor
@@ -30,6 +32,9 @@ public:
     void mostrarReportes();
     void operacionesArbol();
 
+    void verificarTransferencia();
+    void verificarDeposito();
+    void verificarRetiro();
 private:
     // Métodos auxiliares
     void mostrarMenuPrincipal();
