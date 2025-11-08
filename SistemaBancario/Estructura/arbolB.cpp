@@ -103,7 +103,7 @@ nuevo->hijo[nuevo->clavesUsadas] = listapunt[2 * ORDEN];
 cliente = claveMedio;
 
  } else {
- // Inserta nueva clave en su lugar:
+ // Inserta nueva clave 
  i = 0;
  if ((*nodo)->clavesUsadas > 0)
  {
