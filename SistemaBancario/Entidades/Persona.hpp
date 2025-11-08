@@ -1,24 +1,40 @@
 #include <string>
 
 class Persona {
-public:
-    // Constructor, métodos, etc.
-    Persona(int id, const std::string& nombre, const std::string& usuario, const std::string& contra);
-
-    // Getters
-    int getId() const;
-    std::string getNombre() const;
-
-
-private:
-    int idPersona;
+protected:
+    std::string dui;
     std::string nombre;
     std::string apellido;
+    std::string email;
     std::string telefono;
-    std::string usuario;
-    std::string contra; 
-};
+    std::string direccion;
 
+public:
+    // Constructores
+    Persona();
+    Persona(std::string dui, std::string nombre, std::string apellido, 
+            std::string email, std::string telefono, std::string direccion);
+    
+    // Getters
+    std::string getDui() const;
+    std::string getNombre() const;
+    std::string getApellido() const;
+    std::string getEmail() const;
+    std::string getTelefono() const;
+    std::string getDireccion() const;
+    
+    // Setters
+    void setDui(std::string dui);
+    void setNombre(std::string nombre);
+    void setApellido(std::string apellido);
+    void setEmail(std::string email);
+    void setTelefono(std::string telefono);
+    void setDireccion(std::string direccion);
+    
+    // Métodos virtuales
+     virtual void mostrarInfo() const;
+    
+};
 /* LISTADO DE METODOS
   -Constructor 
   -getters y setters

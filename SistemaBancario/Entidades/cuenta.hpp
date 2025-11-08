@@ -1,21 +1,53 @@
-#include <iostream>
+#define CUENTA_HPP
+
 #include <string>
-/*Guardar cuenta en árbol*/
-class Cuenta{
-  public:
-  Cuenta(int id = 0, int num = 0, int p = 0, std::string tip = "", 
-           double sal = 0.0, bool act = true, int idClt = 0)
-        : idCuenta(id), numeroCuenta(num), pin(p), tipo(tip),
-          saldo(sal), activa(act), idCliente(idClt) {}
+
+class Cuenta {
 private:
-int idCuenta;
-    int numeroCuenta;  
-    int pin;
+    std::string numeroCuenta;
+    std::string duiCliente;  // Cambié de dniCliente a duiCliente para consistencia
     std::string tipo;
-    double saldo;     
-    bool activa;         
-    int idCliente;
+    double saldo;
+    double limiteSobregiro;
+    std::string fechaApertura;
+    std::string estado;
+
+public:
+    Cuenta();
+    Cuenta(std::string numeroCuenta, std::string duiCliente, std::string tipo, 
+           double saldoInicial = 0.0, double limiteSobregiro = 0.0);
+    
+    // Getters
+    std::string getNumeroCuenta() const;
+    std::string getDuiCliente() const;
+    std::string getTipo() const;
+    double getSaldo() const;
+    double getLimiteSobregiro() const;
+    std::string getFechaApertura() const;
+    std::string getEstado() const;
+    
+    // Setters
+    void setTipo(std::string tipo);
+    void setLimiteSobregiro(double limite);
+    void setEstado(std::string estado);
+    
+    // Operaciones bancarias
+    bool depositar(double monto);
+    bool retirar(double monto);
+    bool transferir(Cuenta& cuentaDestino, double monto);
+    
+    // Validaciones
+    bool tieneFondosSuficientes(double monto) const;
+    bool estaActiva() const;
+    
+    // Mostrar información
+    void mostrarInfo() const;
+    
+    // Operadores para árbol B (CORREGIDOS)
+    bool operator<(const Cuenta& otro) const;
+    bool operator==(const Cuenta& otro) const;
 };
+
 /* LISTADO DE METODOS
   -Constructor 
   -getters y setters
