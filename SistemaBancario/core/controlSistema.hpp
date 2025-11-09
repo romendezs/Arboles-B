@@ -1,44 +1,41 @@
-#include <iostream>
+#pragma once
+
+#include <memory>
 #include <string>
-#include <stdio.h>
-#include "../Reporte/validacionUser.hpp"
+
+#include "../Estructura/arbolB.hpp"
+#include "../Entidades/transaccion.hpp"
 #include "../Roles/cliente.hpp"
+#include "../Reporte/reporte.hpp"
 
 class ControlSistema {
 private:
-    ArbolB* arbolClientes;  
-    bool sistemaActivo;
-    std::string usuarioActual;
-    bool esAdministrador;
-    Transaccion* transaccionActual;  
-    Cliente* clienteDestino;
+    std::unique_ptr<ArbolB> arbolClientes_;
+    bool sistemaActivo_;
+    std::string usuarioActual_;
+    bool esAdministrador_;
+
+    Reporte reporte_;
 
 public:
-    // Constructor
     ControlSistema();
-    
 
-    // Métodos principales del sistema
     void IniciarSistema();
     void CerrarSistema();
     void Ejecutar();
+
     bool validarUsuario();
     void menuCliente();
     void menuAdmin();
 
-    // Métodos específicos para gestión de clientes
     void gestionarClientes();
     void buscarCliente();
     void mostrarReportes();
     void operacionesArbol();
 
-    void verificarTransferencia();
-    void verificarDeposito();
-    void verificarRetiro();
 private:
-    // Métodos auxiliares
     void mostrarMenuPrincipal();
     void cerrarSesion();
-    bool hayUsuarioLogueado();
+    bool hayUsuarioLogueado() const;
     void pausarPantalla();
 };

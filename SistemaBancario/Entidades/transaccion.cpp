@@ -1,134 +1,72 @@
-#include "Transaccion.hpp"
-#include <ctime>
-#include <sstream>
+#include "transaccion.hpp"
+
 #include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
 
-using namespace std;
-
-// Constructor por defecto
-Transaccion::Transaccion() 
-    : id(""), cliente(nullptr), numeroCuenta(""), tipo(""), 
-      monto(0.0), fecha(""), estado("Pendiente") {}
-
-// Constructor con parámetros
-Transaccion::Transaccion(string id, Cliente* cliente, string numeroCuenta,
-                         string tipo, double monto)
-    : id(id), cliente(cliente), numeroCuenta(numeroCuenta), 
-      tipo(tipo), monto(monto), fecha(obtenerFechaActual()), estado("Pendiente") {}
-
-// Setters
-void Transaccion::setId(string nuevoId) {
-    id = nuevoId;
+namespace {
+constexpr char kSeparador = ',';
 }
 
-void Transaccion::setCliente(Cliente* nuevoCliente) {
-    cliente = nuevoCliente;
-}
+Transaccion::Transaccion()
+    : id_(),
+      duiCliente_(),
+      numeroCuenta_(),
+      tipo_(),
+      monto_(0.0),
+      fecha_(),
+      estado_("Pendiente") {}
 
-void Transaccion::setNumeroCuenta(string nuevoNumero) {
-    numeroCuenta = nuevoNumero;
-}
+Transaccion::Transaccion(std::string id,
+                         std::string duiCliente,
+                         std::string numeroCuenta,
+                         std::string tipo,
+                         double monto,
+                         std::string fecha,
+                         std::string estado)
+    : id_(std::move(id)),
+      duiCliente_(std::move(duiCliente)),
+      numeroCuenta_(std::move(numeroCuenta)),
+      tipo_(std::move(tipo)),
+      monto_(monto),
+      fecha_(std::move(fecha)),
+      estado_(std::move(estado)) {}
 
-void Transaccion::setTipo(string nuevoTipo) {
-    tipo = nuevoTipo;
-}
+const std::string& Transaccion::getId() const { return id_; }
+const std::string& Transaccion::getDuiCliente() const { return duiCliente_; }
+const std::string& Transaccion::getNumeroCuenta() const { return numeroCuenta_; }
+const std::string& Transaccion::getTipo() const { return tipo_; }
+double Transaccion::getMonto() const { return monto_; }
+const std::string& Transaccion::getFecha() const { return fecha_; }
+const std::string& Transaccion::getEstado() const { return estado_; }
 
-void Transaccion::setMonto(double nuevoMonto) {
-    monto = nuevoMonto;
-}
-
-void Transaccion::setFecha(string nuevaFecha) {
-    fecha = nuevaFecha;
-}
-
-void Transaccion::setEstado(string nuevoEstado) {
-    estado = nuevoEstado;
-}
-
-// Getters
-string Transaccion::getId() const {
-    return id;
-}
-
-Cliente* Transaccion::getCliente() const {
-    return cliente;
-}
-
-string Transaccion::getNumeroCuenta() const {
-    return numeroCuenta;
-}
-
-string Transaccion::getTipo() const {
-    return tipo;
-}
-
-double Transaccion::getMonto() const {
-    return monto;
-}
-
-string Transaccion::getFecha() const {
-    return fecha;
-}
-
-string Transaccion::getEstado() const {
-    return estado;
-}
-
-// Para compatibilidad con código existente
-string Transaccion::getDuiCliente() const {
-    if (cliente != nullptr) {
-        return cliente->getDui();  
-    }
-    return "";
-}
-
-// Generar ID único para transacción
-string Transaccion::generarId() {
-    static int contador = 1000;
-    return "TRAN" + to_string(contador++);
-}
-
-// Obtener fecha actual
-string Transaccion::obtenerFechaActual() {
-    time_t ahora = time(0);
-    tm* tiempoLocal = localtime(&ahora);
-    
-    stringstream ss;
-    ss << setw(2) << setfill('0') << tiempoLocal->tm_mday << "/"
-       << setw(2) << setfill('0') << (tiempoLocal->tm_mon + 1) << "/"
-       << (tiempoLocal->tm_year + 1900);
-    
+std::string Transaccion::aLineaCsv() const {
+    std::ostringstream ss;
+    ss << id_ << kSeparador
+       << duiCliente_ << kSeparador
+       << numeroCuenta_ << kSeparador
+       << tipo_ << kSeparador
+       << std::fixed << std::setprecision(2) << monto_ << kSeparador
+       << fecha_ << kSeparador
+       << estado_;
     return ss.str();
 }
 
-// Mostrar información de la transacción
-void Transaccion::mostrarInfo() const {
-    cout << "=== INFORMACION DE TRANSACCION ===" << endl;
-    cout << "ID: " << id << endl;
-    if (cliente != nullptr) {
-        cout << "Cliente: " << cliente->getNombre() << endl;
-        cout << "DUI: " << cliente->getDui() << endl;
+Transaccion Transaccion::desdeLineaCsv(const std::string& linea) {
+    std::istringstream ss(linea);
+    std::string campo;
+    std::string datos[7];
+    std::size_t indice = 0;
+
+    while (std::getline(ss, campo, kSeparador) && indice < 7) {
+        datos[indice++] = std::move(campo);
     }
-    cout << "Cuenta: " << numeroCuenta << endl;
-    cout << "Tipo: " << tipo << endl;
-    cout << "Monto: $" << monto << endl;
-    cout << "Fecha: " << fecha << endl;
-    cout << "Estado: " << estado << endl;
-    cout << "=================================" << endl;
-}
 
-// Validar si la transacción es válida
-bool Transaccion::esTransaccionValida() const {
-    if(!id.empty() && 
-           cliente != nullptr && 
-           !numeroCuenta.empty() && 
-           !tipo.empty() && 
-           monto > 0.0 && 
-           !fecha.empty();){
+    if (indice != 7) {
+        throw std::runtime_error("Línea de transacción inválida: " + linea);
+    }
 
-            return true;
-           }
-    
-    
-    return false;
+    double monto = std::stod(datos[4]);
+    return Transaccion(datos[0], datos[1], datos[2], datos[3], monto, datos[5], datos[6]);
 }

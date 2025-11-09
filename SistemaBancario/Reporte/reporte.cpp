@@ -1,326 +1,256 @@
-/* Genera reporte de transacciones, de cuentas, de clientes*/
-#include "../Reporte/reporte.hpp"
+#include "reporte.hpp"
 
-using namespace std;
+#include <ctime>
+#include <filesystem>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
 
-// Constructor
-Reporte::Reporte(const string& nombreArchivo) : nombreArchivo(nombreArchivo) {
+namespace fs = std::filesystem;
+
+namespace {
+std::string fechaHoraActual() {
+    std::time_t ahora = std::time(nullptr);
+    std::tm* tiempoLocal = std::localtime(&ahora);
+    std::ostringstream ss;
+    ss << std::put_time(tiempoLocal, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
 }
 
-// Métodos utilitarios
-bool Reporte::abrirArchivo() {
-    archivoReporte.open(nombreArchivo, ios::out | ios::app);
-    return archivoReporte.is_open();
+Reporte::Reporte(std::string nombreArchivo)
+    : nombreArchivo_(std::move(nombreArchivo)) {}
+
+Reporte::~Reporte() {
+    cerrarArchivo();
+}
+
+bool Reporte::abrirArchivo(std::ios_base::openmode modo) {
+    cerrarArchivo();
+    fs::create_directories(fs::path(nombreArchivo_).parent_path());
+    archivoReporte_.open(nombreArchivo_, modo);
+    return archivoReporte_.is_open();
 }
 
 void Reporte::cerrarArchivo() {
-    if (archivoReporte.is_open()) {
-        archivoReporte.close();
+    if (archivoReporte_.is_open()) {
+        archivoReporte_.close();
     }
 }
 
-bool Reporte::estaAbierto(){
-    return archivoReporte.is_open();
-}
-
-string Reporte::getNombreArchivo(){
-    return nombreArchivo;
-}
-
-void Reporte::setNombreArchivo(string& nombre) {
-    nombreArchivo = nombre;
-}
-
-string Reporte::obtenerFechaHoraActual() {
-    time_t ahora = time(nullptr);
-    tm* tiempoLocal = localtime(&ahora);
-    
-    char buffer[80];
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tiempoLocal);
-    return string(buffer);
-}
-
-void Reporte::generarSeparador(char caracter, int longitud) {
-    if (archivoReporte.is_open()) {
-        archivoReporte << string(longitud, caracter) << endl;
-    }
-}
-
-void Reporte::generarEncabezado(const string& titulo) {
-    if (!archivoReporte.is_open()) return;
-
-    archivoReporte << endl;
-    generarSeparador('=');
-    archivoReporte << "\t" << titulo << endl;
-    archivoReporte << "Fecha: " << obtenerFechaHoraActual() << endl;
-    generarSeparador('=');
-    archivoReporte << endl;
-}
-
-void Reporte::generarPiePagina() {
-    if (!archivoReporte.is_open()) return;
-
-    archivoReporte << endl;
-    generarSeparador('-');
-    archivoReporte << "Fin del reporte" << endl;
-    generarSeparador('-');
-    archivoReporte << endl;
-}
-
-string Reporte::encriptar(const string& texto) {
-    string resultado = texto;
+std::string Reporte::encriptar(const std::string& texto) const {
+    std::string resultado = texto;
     for (char& c : resultado) {
-        c = c + 3; 
+        c = static_cast<char>(c + 3);
     }
     return resultado;
 }
 
-string Reporte::desencriptar(const string& texto) {
-    string resultado = texto;
+std::string Reporte::desencriptar(const std::string& texto) const {
+    std::string resultado = texto;
     for (char& c : resultado) {
-        c = c - 3; // Revertir desplazamiento
+        c = static_cast<char>(c - 3);
     }
     return resultado;
 }
-bool Reporte::generarReporteClientes(ArbolB& arbolCliente) {
-   
-    if (!abrirArchivo()) return false;
-    
-    generarEncabezado("REPORTE DE CLIENTES");
-   arbolCuentas.imprimirArbolEnArchivo(archivoReporte);
-    generarPiePagina();
-    cerrarArchivo();
-    return true;
-}
- bool Reporte::generarReporteCuentas(ArbolB& arbolCuentas){
-    if(!abrirArchivo())return false;
 
-    generarEncabezado("CUENTAS BANCARIAS");
-    archivoReporte << "ID CUENTA\t\tDUI CLIENTE\t\tTIPO\t\tSALDO" << endl;
-    generarSeparador('-', 80);
-    arbolCuentas.imprimirArbolEnArchivo(archivoReporte);
-
-    generarPiePagina();
-    cerrarArchivo();
-    return true;
- }
-bool Reporte::generarReporteTransaccionesCliente(string& dui, ArbolB& transaccionCliente){
-
-    if(!abrirArchivo()) return false;
-    if(dui.empty())return false;
-   
-    if(!cargarTransaccionesCliente(dui, arbolTransacciones)){
-     generarEncabezado("REPORTE DE TRANSACCIONES");
-     transaccionCliente.imprimirArbolEnArchivo(archivoReporte);
-    generarPiePagina();
-    cerrarArchivo();
-    return true;
-    }
-    archivoReporte << "ID TRANSACCIÓN\tTIPO\t\tMONTO\t\tFECHA" << endl;
-    generarSeparador('-', 80);
-
-    generarPiePagina();
-    cerrarArchivo();
-    return true;
+std::string Reporte::rutaClientes() {
+    return "data/clientes/clientes.csv";
 }
 
-bool Reporte::guardarClientes(ArbolB &arbolCliente){
-  ofstream archivo("data/clientes/clientes.txt");
-
-  if(!archivo.is_open()) {
-    printf("Error al abrir el archivo");
-    return false;
-  }
-  generarEncabezado("CLIENTES");
-
-  bool resultado = arbolCliente.guardarTodo(archivo);
-
-  archivo.close();
-  return resultado;
+std::string Reporte::rutaCredencialesClientes() {
+    return "data/clientes/credenciales_clientes.txt";
 }
 
-bool Reporte::cargarClientes(ArbolB &arbolCliente){
-    ifstream archivo("data/clientes/clientes.txt");
+std::string Reporte::rutaCredencialesAdmin() {
+    return "data/admin/credenciales_admin.txt";
+}
 
-    if(!abrirArchivo()){
-          printf("No existe cliente.txt se creara uno nuevo");
-          return  false;
-    }
+std::string Reporte::rutaTransacciones(const std::string& dui) {
+    return "data/transacciones/transacciones-" + dui + ".csv";
+}
 
-    //Verifica que es archivo de clientes
-    string linea;
-    getline(archivo, linea);
-
-    if(linea != "CLIENTES"){
-        printf("El archivo no es de clientes");
-        archivo.close;
+bool Reporte::generarReporteClientes(const ArbolB& arbolClientes) {
+    if (!abrirArchivo(std::ios::out | std::ios::trunc)) {
         return false;
     }
-    //Leer cliente por cliente
-    int cont = 0;
-    while(getline(archivo, linea)){
-        if(!linea.empty()){
-            Cliente* cliente= crearClienteDesdeLinea(linea);
-            if(cliente != nullptr){
-                arbolCliente.insertar(*cliente);
-                cont++;    
-            }
-        }
-    }
-    archivo.close();
-    printf("Se cargaron los clientes");
-    return cont>0;
+
+    archivoReporte_ << "Reporte generado: " << fechaHoraActual() << '\n';
+    archivoReporte_ << std::string(60, '=') << '\n';
+    arbolClientes.imprimirEnArchivo(archivoReporte_);
+    archivoReporte_ << std::string(60, '=') << '\n';
+
+    cerrarArchivo();
+    return true;
 }
 
-Cliente* Reporte::crearClienteDesdeLinea( string& linea) {
-    // Formato: dni,nombre,apellido,email,telefono,direccion
-    string datos[6];
-    int indice = 0;
-    string dato = "";
-    
-    for (char c : linea) {
-        if (c == ',') {
-            if (indice < 6) {
-                datos[indice] = dato;
-                indice++;
-            }
-            dato = "";
-        } else {
-            dato += c;
-        }
-    }
-    
-    // Último dato
-    if (indice < 6 && !dato.empty()) {
-        datos[indice] = dato;
-    }
-    
-    // Verificar que tenemos todos los datos
-    if (indice >= 5) {
-        return new Cliente(datos[0], datos[1], datos[2], datos[3], datos[4], datos[5]);
-    }
-    
-    return nullptr;
-}
-//TRANSACCION
-string Reporte::getNombreArchivoTransacciones( string& dui){
-    return "data/transacciones/transacciones-" + dui + ".txt";
-}
+bool Reporte::guardarClientes(const ArbolB& arbolClientes) const {
+    const fs::path ruta = rutaClientes();
+    fs::create_directories(ruta.parent_path());
 
-bool Reporte::guardarTransacciones( Transaccion& transaccion) {
-    string dui = transaccion.getDuiCliente();
-    string nombreArchivo = getNombreArchivoTransacciones(dui);
-    
-    ofstream archivo(nombreArchivo, ios::app | ios::out); // ios::app para agregar al final
-    
+    std::ofstream archivo(ruta, std::ios::out | std::ios::trunc);
     if (!archivo.is_open()) {
-        printf("No se pudo abrir el archivo");
         return false;
     }
-    
-    // Guardar transacción en formato simple
-    archivo << transaccion.getId() << ","
-            << transaccion.getDuiCliente() << ","
-            <<transaccion.getNumeroCuenta()<< ","
-            << transaccion.getTipo() << ","
-            << transaccion.getMonto() << ","
-            << transaccion.getFecha() << ","
-            <<transaccion.getEstado()<< endl;
-    
-    archivo.close();
+
+    archivo << "dui,nombre,apellido,email,telefono,direccion,estado,fecha_registro" << '\n';
+    arbolClientes.recorrer([&archivo](const Cliente& cliente) {
+        archivo << cliente.getDui() << ','
+                << cliente.getNombre() << ','
+                << cliente.getApellido() << ','
+                << cliente.getEmail() << ','
+                << cliente.getTelefono() << ','
+                << cliente.getDireccion() << ','
+                << cliente.getEstado() << ','
+                << cliente.getFechaRegistro() << '\n';
+    });
+
     return true;
 }
 
-// Cargar todas las transacciones de un cliente específico
-bool Reporte::cargarTransaccionesCliente(string& dui, ArbolB &arbolTransacciones) {
-    string nombreArchivo = getNombreArchivoTransacciones(dui);
-    
-    ifstream archivo(nombreArchivo);
-    
+bool Reporte::cargarClientes(ArbolB& arbolClientes) const {
+    const fs::path ruta = rutaClientes();
+    std::ifstream archivo(ruta);
     if (!archivo.is_open()) {
-        cout << "No hay transacciones para el cliente: " << dui << endl;
         return false;
     }
-    
-    cout << "=== TRANSACCIONES CLIENTE: " << dui << " ===" << endl;
-    
-    string linea;
-    int contador = 0;
-    
-    while (getline(archivo, linea)) {
-        if (!linea.empty()) {
-            // Mostrar transacción
-            //
-            //
-            //
-            cout << linea << endl;
-            contador++;
-        }
+
+    std::string linea;
+    if (!std::getline(archivo, linea)) {
+        return false;
     }
-    
-    archivo.close();
-    cout << "Total transacciones: " << contador << endl;
-    return contador > 0;
+
+    bool cargado = false;
+    while (std::getline(archivo, linea)) {
+        if (linea.empty()) {
+            continue;
+        }
+
+        std::stringstream ss(linea);
+        std::string campos[8];
+        std::size_t indice = 0;
+        while (indice < 8 && std::getline(ss, campos[indice], ',')) {
+            ++indice;
+        }
+        if (indice != 8) {
+            continue;
+        }
+
+        Cliente cliente(campos[0], campos[1], campos[2], campos[3], campos[4], campos[5], campos[6]);
+        cliente.setFechaRegistro(campos[7]);
+        arbolClientes.insertar(cliente);
+        cargado = true;
+    }
+
+    return cargado;
 }
 
-//Verifica las credenciales del admin
-bool Reporte::verificarAdmin(string& usuario, const string& password){
-    ifstream archivo("data/admin/credenciales_admin.txt");
+bool Reporte::guardarTransaccion(const Transaccion& transaccion) const {
+    const fs::path ruta = rutaTransacciones(transaccion.getDuiCliente());
+    fs::create_directories(ruta.parent_path());
 
-    if (!archivo.is_open()) return false;
+    std::ofstream archivo(ruta, std::ios::out | std::ios::app);
+    if (!archivo.is_open()) {
+        return false;
+    }
 
-    string linea;
-    while(getline(archivo, linea)){
-        size_t separador = linea.find('|');
-        if(separador != string::npos){
-            string userGuardado = desencriptar(linea.substr(0, separador));
-            string passGuardado = desencriptar(linea.substr(separador+1));
-         if (userGuardado==usuario && passGuardado ==password){
-            archivo.close();
+    archivo << transaccion.aLineaCsv() << '\n';
+    return true;
+}
+
+bool Reporte::cargarTransaccionesCliente(const std::string& dui,
+                                         std::vector<Transaccion>& transacciones) const {
+    const fs::path ruta = rutaTransacciones(dui);
+    std::ifstream archivo(ruta);
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    std::string linea;
+    while (std::getline(archivo, linea)) {
+        if (linea.empty()) {
+            continue;
+        }
+        try {
+            transacciones.push_back(Transaccion::desdeLineaCsv(linea));
+        } catch (const std::exception&) {
+        }
+    }
+
+    return !transacciones.empty();
+}
+
+bool Reporte::guardarCredencialesCliente(const std::string& dui, const std::string& password) const {
+    const fs::path ruta = rutaCredencialesClientes();
+    fs::create_directories(ruta.parent_path());
+
+    std::ofstream archivo(ruta, std::ios::out | std::ios::app);
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    archivo << encriptar(dui) << '|' << encriptar(password) << '\n';
+    return true;
+}
+
+bool Reporte::guardarCredencialesAdmin(const std::string& usuario, const std::string& password) const {
+    const fs::path ruta = rutaCredencialesAdmin();
+    fs::create_directories(ruta.parent_path());
+
+    std::ofstream archivo(ruta, std::ios::out | std::ios::app);
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    archivo << encriptar(usuario) << '|' << encriptar(password) << '\n';
+    return true;
+}
+
+bool Reporte::verificarCliente(const std::string& dui, const std::string& password) const {
+    const fs::path ruta = rutaCredencialesClientes();
+    std::ifstream archivo(ruta);
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    const std::string objetivoDui = encriptar(dui);
+    const std::string objetivoPass = encriptar(password);
+    std::string linea;
+    while (std::getline(archivo, linea)) {
+        const std::size_t separador = linea.find('|');
+        if (separador == std::string::npos) {
+            continue;
+        }
+        const std::string duiGuardado = linea.substr(0, separador);
+        const std::string passGuardado = linea.substr(separador + 1);
+        if (duiGuardado == objetivoDui && passGuardado == objetivoPass) {
             return true;
-         }
         }
     }
-    archivo.close();
     return false;
 }
-//Verificar las credenciales de clientes
-bool Reporte::verificarCliente(string &dui, string& password){
-    ifstream archivo("data/clientes/credenciales_clientes.txt");
 
-    if(!archivo.is_open()) return false;
+bool Reporte::verificarAdmin(const std::string& usuario, const std::string& password) const {
+    const fs::path ruta = rutaCredencialesAdmin();
+    std::ifstream archivo(ruta);
+    if (!archivo.is_open()) {
+        return false;
+    }
 
-    string linea;
-    while(getline(archivo, linea)){
-        size_t separador = linea.find('|');
-        if(separador != string::npos){
-            string idGuardado = desencriptar(linea.substr(0,separador));
-            string passGuardado = desencriptar(linea.substr(separador +1));
-
-            if(idGuardado == id && passGuardado == password){
-                archivo.close();
-                return false;
-            }
+    const std::string usuarioObjetivo = encriptar(usuario);
+    const std::string passwordObjetivo = encriptar(password);
+    std::string linea;
+    while (std::getline(archivo, linea)) {
+        const std::size_t separador = linea.find('|');
+        if (separador == std::string::npos) {
+            continue;
+        }
+        const std::string usuarioGuardado = linea.substr(0, separador);
+        const std::string passGuardado = linea.substr(separador + 1);
+        if (usuarioGuardado == usuarioObjetivo && passGuardado == passwordObjetivo) {
+            return true;
         }
     }
-}
-//Guardar las credenciales de Admin
-bool Reporte::guardarCredencialesAdmin(string& usuario, string& password){
-    ofstream archivo(credenciales_admin.txt);
-
-    if(!archivo.is_open()) return false;
-
-    archivo<< encriptor(usuario) <<"|" <<encriptar(password)<< endl;
-    archivo.close();
-    return true;
-}
-//Guardar las credenciales de cliente
-bool Reporte::guardarCredencialesCliente(string &dui, string& password){
-    ofstream archivo("data/clientes/credenciales_clientes.txt");
-
-      if (!archivo.is_open()) return false;
-
-    archivo << encriptar(dui) << "|" << encriptar(password) << endl;
-    archivo.close();
-    return true;
+    return false;
 }
