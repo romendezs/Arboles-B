@@ -1,0 +1,25 @@
+Seed inicial para el sistema bancario
+====================================
+
+Clientes disponibles
+--------------------
+- Juan Cortes (DUI 00123456-7) — telefono 50370000001, direccion Col. Escalon, estado ACTIVO, registrado el 2024-01-15.
+- Ana Ruiz (DUI 00876543-2) — telefono 50370000002, direccion Santa Tecla, estado ACTIVO, registrado el 2024-03-08.
+- Carlos Mendez (DUI 00543210-9) — telefono 50370000003, direccion San Miguel, estado BLOQUEADO, registrado el 2023-11-21.
+
+Credenciales en texto plano
+---------------------------
+- Administrador: usuario `admin`, password `superseguro`.
+- Clientes:
+  - DUI `00123456-7`, password `clave123`.
+  - DUI `00876543-2`, password `segura456`.
+  - DUI `00543210-9`, password `mypass789`.
+
+Archivos generados
+------------------
+- `data/clientes/clientes.csv` contiene la informacion general de los clientes.
+- `data/clientes/credenciales_clientes.txt` almacena las credenciales cifradas con el desplazamiento +3.
+- `data/admin/credenciales_admin.txt` incluye las credenciales cifradas del administrador.
+- `data/transacciones/transacciones-<DUI>.csv` registra las transacciones historicas de cada cliente.
+
+Los archivos anteriores pueden copiarse o modificarse para preparar diferentes escenarios de pruebas.

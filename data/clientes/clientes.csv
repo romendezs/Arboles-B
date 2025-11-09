@@ -1,0 +1,4 @@
+dui,nombre,apellido,email,telefono,direccion,estado,fecha_registro
+00123456-7,Juan,Cortes,juan.cortes@example.com,50370000001,Col. Escalon,ACTIVO,2024-01-15
+00876543-2,Ana,Ruiz,ana.ruiz@example.com,50370000002,Santa Tecla,ACTIVO,2024-03-08
+00543210-9,Carlos,Mendez,carlos.mendez@example.com,50370000003,San Miguel,BLOQUEADO,2023-11-21
