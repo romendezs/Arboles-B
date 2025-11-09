@@ -1,71 +1,42 @@
-#include <iostream>
+#pragma once
+
 #include <fstream>
 #include <string>
-#include <ctime>
-#include <functional>
+#include <vector>
+
 #include "../Estructura/arbolB.hpp"
-#include "../Roles/cliente.hpp"
-#include "../Entidades/cuenta.hpp"
 #include "../Entidades/transaccion.hpp"
-/* LISTADO DE METODOS
-guardarClientes
-cargarClientes
-guardarTransaccion
-cargarTransaccionesCliente
-Uno para las credenciales de cliente y otro para administrador
-*/
 
-class ArbolB;
-class Cliente;
-class Transaccion;
-class Cuenta;
+class Reporte {
+private:
+    std::string nombreArchivo_;
+    std::ofstream archivoReporte_;
 
-class Reporte{
-  private:
-   std::string carpeta = "data/";
-  std::string nombreArchivo;
-  std::ofstream archivoReporte;
+    bool abrirArchivo(std::ios_base::openmode modo);
+    void cerrarArchivo();
+    std::string encriptar(const std::string& texto) const;
+    std::string desencriptar(const std::string& texto) const;
 
-   std::string encriptar(const std::string& texto);
-    std::string desencriptar(const std::string& texto);
+    static std::string rutaClientes();
+    static std::string rutaCredencialesClientes();
+    static std::string rutaCredencialesAdmin();
+    static std::string rutaTransacciones(const std::string& dui);
 
- public:
-  Reporte(const string& nombreArchivo = "reporte_sistema.txt");
+public:
+    explicit Reporte(std::string nombreArchivo = "data/reporte_sistema.txt");
+    ~Reporte();
 
-  void generarEncabezado(const string& titulo);
-    void generarPiePagina();
-    std::string obtenerFechaHoraActual();
-    void generarSeparador(char caracter ='=', int longitud = 60);
-    
-  //Metodos principales de reportes
-  bool generarReporteClientes(ArbolB& arbolCliente);
-  bool generarReporteTransaccionesCliente(string& dui, ArbolB& arbolTransacciones);
-  bool generarReporteCuentas(Arbol& arbolCliente);
-  
-  //Metodos para guardar la persistencia
-  bool guardarClientes(ArbolB& arbolClientes);
-  bool cargarClientes(ArbolB& arbolClientes);
+    bool generarReporteClientes(const ArbolB& arbolClientes);
 
-  bool guardarTransacciones(Transaccion& transaccion);
-  bool cargarTransaccionesClientes(string& dui, string& credencial);
-  
-  bool cargarCredenciales(ArbolB& arbolCredenciales);
-  cliente ClienteDesdeLinea( string& linea);
+    bool guardarClientes(const ArbolB& arbolClientes) const;
+    bool cargarClientes(ArbolB& arbolClientes) const;
 
-  string getNombreArchivoTransacciones( string& dui);
+    bool guardarTransaccion(const Transaccion& transaccion) const;
+    bool cargarTransaccionesCliente(const std::string& dui,
+                                    std::vector<Transaccion>& transacciones) const;
 
-  //Guardar las credenciales
-  bool guardarCredencialesCliente(string& dui,string& password);
-    bool guardarCredencialesAdmin( string& usuario, string& password);
-    bool verificarCliente(string& dui,  string& password);
-    bool verificarAdmin(string& usuario,  string& password);
-
- //Utilitarios
- bool abrirArchivo();
- void cerrarArchivo();
- bool estaAbierto();
- std::string getNombreArchivo();
- void setNombreArchivo(string& nombre);
- std::string getNombreArchivoTransacciones(std::string &dui);
+    bool guardarCredencialesCliente(const std::string& dui, const std::string& password) const;
+    bool guardarCredencialesAdmin(const std::string& usuario, const std::string& password) const;
+    bool verificarCliente(const std::string& dui, const std::string& password) const;
+    bool verificarAdmin(const std::string& usuario, const std::string& password) const;
 };
-//SEPARAR CREDENCIALES CON DATOS PER

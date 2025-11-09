@@ -1,52 +1,46 @@
-#include <iostream>
-#include <string>
-#include <ctime>
-#include "../Entidades/Persona.hpp"
-#include "../Roles/cliente.hpp"
+#pragma once
 
-class cliente : public Persona {
+#include <memory>
+#include <string>
+
+#include "../Entidades/Persona.hpp"
+#include "../Entidades/cuenta.hpp"
+
+class Cliente : public Persona {
 private:
-    std::string estado;
-    std::string usuario;
-    std::string fechaRegistro;
-    Cuenta* cuenta;
+    std::string estado_;
+    std::string fechaRegistro_;
+    std::shared_ptr<Cuenta> cuenta_;
 
 public:
     Cliente();
-    Cliente(std::string dui, std::string nombre, std::string apellido, 
-            std::string email, std::string telefono, std::string direccion,std::string estado = "ACTIVO");
-    
-   //gets
-    std::string getUsuario() const;
-    std::string getFechaRegistro() const;
-    Cuenta* getCuenta()const;
-//sets
-    void setUsuario(std::string usuario);
-    void setCuenta(Cuenta* cuenta);
+    Cliente(std::string dui,
+            std::string nombre,
+            std::string apellido,
+            std::string email,
+            std::string telefono,
+            std::string direccion,
+            std::string estado = "ACTIVO");
 
-    //mostrar info
+    const std::string& getEstado() const;
+    const std::string& getFechaRegistro() const;
+    std::shared_ptr<Cuenta> getCuenta() const;
+
+    void setEstado(const std::string& estado);
+    void setFechaRegistro(const std::string& fechaRegistro);
+    void setCuenta(std::shared_ptr<Cuenta> cuenta);
+
     void mostrarInfo() const override;
-    //estados
+
     void activar();
     void desactivar();
     void bloquear();
-    bool estaActivo() const; 
+    bool estaActivo() const;
 
-    //operaciones
-     bool depositar(double monto);
+    bool depositar(double monto);
     bool retirar(double monto);
     bool transferir(Cliente& clienteDestino, double monto);
     double consultarSaldo() const;
 
-    // Operadores para el árbol B
-    bool operator<(const Cliente& otro);
-    bool operator==(const Cliente& otro);
-    bool operator>(const Cliente& otro);
+    bool operator<(const Cliente& otro) const;
 };
-/* LISTADO DE METODOS
-  -Constructor 
-  -getters y setters
-  -Validación de credenciales
-  -mostrarInfo() este se usa para mostrar un menú dependiendo
-  si eres un Administrador o un usuario
-*/

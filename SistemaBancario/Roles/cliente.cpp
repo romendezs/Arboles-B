@@ -1,84 +1,86 @@
-/*Implementación de la clase cliente.hpp 
-  Generar reporte de las transaciones 
-  Hacer un depostio
-  sacar dinero
-*/
-
-//VALIDACIONES
 #include "cliente.hpp"
-#include <iostream>
+
 #include <ctime>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <utility>
 
-// Constructores
-Cliente::Cliente() 
-    : Persona(), estado("ACTIVO"), fechaRegistro("") , cuenta(nullptr){}
-
-Cliente::Cliente(std::string dui, std::string nombre, std::string apellido, 
-                 std::string email, std::string telefono, std::string direccion,
-                 std::string estado)
-    : Persona(dui, nombre, apellido, email, telefono, direccion), 
-      estado(estado), cuenta(nullptr) {
-    
-    // Establecer fecha de registro actual
-    time_t ahora = time(nullptr);
-    tm* tiempoLocal = localtime(&ahora);
-    char buffer[80];
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d", tiempoLocal);
-    fechaRegistro = buffer;
+namespace {
+std::string fechaActual() {
+    std::time_t ahora = std::time(nullptr);
+    std::tm* tiempoLocal = std::localtime(&ahora);
+    std::ostringstream ss;
+    ss << std::put_time(tiempoLocal, "%Y-%m-%d");
+    return ss.str();
 }
+}  // namespace
 
-// Getters
-std::string Cliente::getEstado() const { return estado; }
-std::string Cliente::getFechaRegistro() const { return fechaRegistro; }
-Cuenta* Cliente::getCuenta()const {return cuenta};
-//Setters
-void Cliente::setEstado(std::string estado) { this->estado = estado; }
-void Cliente::setFechaRegistro(std::string fechaRegistro) { this->fechaRegistro = fechaRegistro; }
-void Cliente::setCuenta(Cuenta *cuenta){this->cuenta = cuenta; }
+Cliente::Cliente()
+    : Persona(), estado_("ACTIVO"), fechaRegistro_(fechaActual()), cuenta_(nullptr) {}
 
-// Métodos de estado
-void Cliente::activar() { estado = "ACTIVO"; }
-void Cliente::desactivar() { estado = "INACTIVO"; }
-void Cliente::bloquear() { estado = "BLOQUEADO"; }
-bool Cliente::estaActivo() const { return estado == "ACTIVO"; }
+Cliente::Cliente(std::string dui,
+                 std::string nombre,
+                 std::string apellido,
+                 std::string email,
+                 std::string telefono,
+                 std::string direccion,
+                 std::string estado)
+    : Persona(std::move(dui),
+              std::move(nombre),
+              std::move(apellido),
+              std::move(email),
+              std::move(telefono),
+              std::move(direccion)),
+      estado_(std::move(estado)),
+      fechaRegistro_(fechaActual()),
+      cuenta_(nullptr) {}
+
+const std::string& Cliente::getEstado() const { return estado_; }
+const std::string& Cliente::getFechaRegistro() const { return fechaRegistro_; }
+std::shared_ptr<Cuenta> Cliente::getCuenta() const { return cuenta_; }
+
+void Cliente::setEstado(const std::string& estado) { estado_ = estado; }
+void Cliente::setFechaRegistro(const std::string& fechaRegistro) {
+    fechaRegistro_ = fechaRegistro;
+}
+void Cliente::setCuenta(std::shared_ptr<Cuenta> cuenta) { cuenta_ = std::move(cuenta); }
 
 void Cliente::mostrarInfo() const {
     Persona::mostrarInfo();
-    std::cout << "Estado: " << estado
-              << "\nFecha Registro: " << fechaRegistro << std::endl;
+    std::cout << "Estado: " << estado_
+              << "\nFecha Registro: " << fechaRegistro_ << std::endl;
+    if (cuenta_) {
+        std::cout << "--- Cuenta asociada ---" << std::endl;
+        cuenta_->mostrarInfo();
+    }
 }
-//Operaciones bancarias
-bool Cliente::depositar(double monto){
-  if(!estaActivo || cuenta== nullptr) return false;
-  return cuenta->depositar(monto);
+
+void Cliente::activar() { estado_ = "ACTIVO"; }
+void Cliente::desactivar() { estado_ = "INACTIVO"; }
+void Cliente::bloquear() { estado_ = "BLOQUEADO"; }
+
+bool Cliente::estaActivo() const { return estado_ == "ACTIVO"; }
+
+bool Cliente::depositar(double monto) {
+    return cuenta_ != nullptr && cuenta_->depositar(monto);
 }
 
 bool Cliente::retirar(double monto) {
-    if (!estaActivo() || cuenta == nullptr) return false;
-    return cuenta->retirar(monto);
+    return cuenta_ != nullptr && cuenta_->retirar(monto);
 }
 
 bool Cliente::transferir(Cliente& clienteDestino, double monto) {
-    if (!estaActivo() || cuenta == nullptr || 
-        !clienteDestino.estaActivo() || clienteDestino.getCuenta() == nullptr) {
+    if (cuenta_ == nullptr || clienteDestino.getCuenta() == nullptr) {
         return false;
     }
-    return cuenta->transferir(*(clienteDestino.getCuenta()), monto);
+    return cuenta_->transferir(*clienteDestino.getCuenta(), monto);
 }
 
 double Cliente::consultarSaldo() const {
-    if (cuenta == nullptr) return 0.0;
-    return cuenta->getSaldo();
+    return cuenta_ != nullptr ? cuenta_->getSaldo() : 0.0;
 }
 
 bool Cliente::operator<(const Cliente& otro) const {
-    return dui < otro.dui;  // Ordenar por DUI
-}
-
-bool Cliente::operator==(const Cliente& otro) const {
-    return dui == otro.dui;  // Comparar por DUI
-}
-
-bool Cliente::operator>(const Cliente& otro) const {
-    return dui > otro.dui;  // Ordenar por DUI
+    return getDui() < otro.getDui();
 }
