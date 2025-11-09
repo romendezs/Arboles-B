@@ -1,5 +1,6 @@
 #include "reporte.hpp"
 
+#include <array>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
@@ -16,6 +17,22 @@ std::string fechaHoraActual() {
     std::ostringstream ss;
     ss << std::put_time(tiempoLocal, "%Y-%m-%d %H:%M:%S");
     return ss.str();
+}
+
+fs::path baseDatos() {
+    static const std::array<fs::path, 3> candidatos = {
+        fs::path("data"),
+        fs::path("SistemaBancario/data"),
+        fs::path("../data")
+    };
+
+    for (const auto& candidato : candidatos) {
+        if (fs::exists(candidato)) {
+            return candidato;
+        }
+    }
+
+    return candidatos.front();
 }
 }
 
@@ -56,19 +73,19 @@ std::string Reporte::desencriptar(const std::string& texto) const {
 }
 
 std::string Reporte::rutaClientes() {
-    return "data/clientes/clientes.csv";
+    return (baseDatos() / "clientes" / "clientes.csv").string();
 }
 
 std::string Reporte::rutaCredencialesClientes() {
-    return "data/clientes/credenciales_clientes.txt";
+    return (baseDatos() / "clientes" / "credenciales_clientes.txt").string();
 }
 
 std::string Reporte::rutaCredencialesAdmin() {
-    return "data/admin/credenciales_admin.txt";
+    return (baseDatos() / "admin" / "credenciales_admin.txt").string();
 }
 
 std::string Reporte::rutaTransacciones(const std::string& dui) {
-    return "data/transacciones/transacciones-" + dui + ".csv";
+    return (baseDatos() / "transacciones" / ("transacciones-" + dui + ".csv")).string();
 }
 
 bool Reporte::generarReporteClientes(const ArbolB& arbolClientes) {
