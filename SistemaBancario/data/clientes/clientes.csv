@@ -1,0 +1,4 @@
+dui,nombre,apellido,email,telefono,direccion,estado,fecha_registro
+01234567-8,Ana,Martinez,ana.martinez@banco.com,77771234,San Salvador,ACTIVO,2024-01-05
+02345678-9,Carlos,Gomez,carlos.gomez@banco.com,77775678,Santa Ana,ACTIVO,2024-02-12
+03456789-0,Luisa,Lopez,luisa.lopez@banco.com,77779876,San Miguel,ACTIVO,2024-03-22
