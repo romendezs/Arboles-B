@@ -1,85 +1,81 @@
 #include "cuenta.hpp"
+
 #include <iostream>
-#include <ctime>
+#include <utility>
 
-// Constructor por defecto
-Cuenta::Cuenta() 
-    : numeroCuenta(""), duiCliente(""), tipo("AHORRO"), saldo(0.0), 
-      limiteSobregiro(0.0), fechaApertura(""), estado("ACTIVA") {}
+#include "../core/util_fecha.hpp"
 
-// Constructor con parámetros
-Cuenta::Cuenta(std::string numeroCuenta, std::string duiCliente, std::string tipo, 
-               double saldoInicial, double limiteSobregiro)
-    : numeroCuenta(numeroCuenta), duiCliente(duiCliente), tipo(tipo), 
-      saldo(saldoInicial), limiteSobregiro(limiteSobregiro), estado("ACTIVA") {
-    
-    // Establecer fecha de apertura actual
-    time_t ahora = time(nullptr);
-    tm* tiempoLocal = localtime(&ahora);
-    char buffer[80];
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d", tiempoLocal);
-    fechaApertura = buffer;
-}
+Cuenta::Cuenta()
+    : numeroCuenta_(),
+      duiCliente_(),
+      tipo_("AHORRO"),
+      saldo_(0.0),
+      limiteSobregiro_(0.0),
+      fechaApertura_(util::fechaActual()),
+      estado_("ACTIVA") {}
 
-// Getters
-std::string Cuenta::getNumeroCuenta() const { return numeroCuenta; }
-std::string Cuenta::getDuiCliente() const { return duiCliente; }
-std::string Cuenta::getTipo() const { return tipo; }
-double Cuenta::getSaldo() const { return saldo; }
-double Cuenta::getLimiteSobregiro() const { return limiteSobregiro; }
-std::string Cuenta::getFechaApertura() const { return fechaApertura; }
-std::string Cuenta::getEstado() const { return estado; }
+Cuenta::Cuenta(std::string numeroCuenta,
+               std::string duiCliente,
+               std::string tipo,
+               double saldoInicial,
+               double limiteSobregiro)
+    : numeroCuenta_(std::move(numeroCuenta)),
+      duiCliente_(std::move(duiCliente)),
+      tipo_(std::move(tipo)),
+      saldo_(saldoInicial),
+      limiteSobregiro_(limiteSobregiro),
+      fechaApertura_(util::fechaActual()),
+      estado_("ACTIVA") {}
 
-// Setters
-void Cuenta::setTipo(std::string tipo) { this->tipo = tipo; }
-void Cuenta::setLimiteSobregiro(double limite) { this->limiteSobregiro = limite; }
-void Cuenta::setEstado(std::string estado) { this->estado = estado; }
+const std::string& Cuenta::getNumeroCuenta() const { return numeroCuenta_; }
+const std::string& Cuenta::getDuiCliente() const { return duiCliente_; }
+const std::string& Cuenta::getTipo() const { return tipo_; }
+double Cuenta::getSaldo() const { return saldo_; }
+double Cuenta::getLimiteSobregiro() const { return limiteSobregiro_; }
+const std::string& Cuenta::getFechaApertura() const { return fechaApertura_; }
+const std::string& Cuenta::getEstado() const { return estado_; }
 
-// Operaciones bancarias
+void Cuenta::setTipo(const std::string& tipo) { tipo_ = tipo; }
+void Cuenta::setLimiteSobregiro(double limite) { limiteSobregiro_ = limite; }
+void Cuenta::setEstado(const std::string& estado) { estado_ = estado; }
+
 bool Cuenta::depositar(double monto) {
-    if (monto <= 0) return false;
-    saldo += monto;
+    if (monto <= 0.0 || !estaActiva()) {
+        return false;
+    }
+    saldo_ += monto;
     return true;
 }
 
 bool Cuenta::retirar(double monto) {
-    if (monto <= 0 || !tieneFondosSuficientes(monto) || !estaActiva()) {
+    if (monto <= 0.0 || !estaActiva() || !tieneFondosSuficientes(monto)) {
         return false;
     }
-    saldo -= monto;
+    saldo_ -= monto;
     return true;
 }
 
 bool Cuenta::transferir(Cuenta& cuentaDestino, double monto) {
-    if (!retirar(monto)) return false;
+    if (!retirar(monto)) {
+        return false;
+    }
     return cuentaDestino.depositar(monto);
 }
 
-// Validaciones
 bool Cuenta::tieneFondosSuficientes(double monto) const {
-    return (saldo + limiteSobregiro) >= monto;
+    return (saldo_ + limiteSobregiro_) >= monto;
 }
 
 bool Cuenta::estaActiva() const {
-    return estado == "ACTIVA";
+    return estado_ == "ACTIVA";
 }
 
-// Mostrar información
 void Cuenta::mostrarInfo() const {
-    std::cout << "Número de Cuenta: " << numeroCuenta
-              << "\nDUI Cliente: " << duiCliente
-              << "\nTipo: " << tipo
-              << "\nSaldo: $" << saldo
-              << "\nLímite Sobregiro: $" << limiteSobregiro
-              << "\nFecha Apertura: " << fechaApertura
-              << "\nEstado: " << estado << std::endl;
-}
-
-// Operadores para árbol B
-bool Cuenta::operator<(const Cuenta& otro) const {
-    return numeroCuenta < otro.numeroCuenta;  // Ordenar por número de cuenta
-}
-
-bool Cuenta::operator==(const Cuenta& otro) const {
-    return numeroCuenta == otro.numeroCuenta;  // Comparar por número de cuenta
+    std::cout << "Número de Cuenta: " << numeroCuenta_
+              << "\nDUI Cliente: " << duiCliente_
+              << "\nTipo: " << tipo_
+              << "\nSaldo: $" << saldo_
+              << "\nLímite Sobregiro: $" << limiteSobregiro_
+              << "\nFecha Apertura: " << fechaApertura_
+              << "\nEstado: " << estado_ << std::endl;
 }

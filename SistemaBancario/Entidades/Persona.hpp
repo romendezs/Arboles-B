@@ -1,44 +1,41 @@
+#pragma once
+
 #include <string>
 
 class Persona {
 protected:
-    std::string dui;
-    std::string nombre;
-    std::string apellido;
-    std::string email;
-    std::string telefono;
-    std::string direccion;
+    std::string dui_;
+    std::string nombre_;
+    std::string apellido_;
+    std::string email_;
+    std::string telefono_;
+    std::string direccion_;
 
 public:
-    // Constructores
     Persona();
-    Persona(std::string dui, std::string nombre, std::string apellido, 
-            std::string email, std::string telefono, std::string direccion);
-    
+    Persona(std::string dui,
+            std::string nombre,
+            std::string apellido,
+            std::string email,
+            std::string telefono,
+            std::string direccion);
+
     // Getters
-    std::string getDui() const;
-    std::string getNombre() const;
-    std::string getApellido() const;
-    std::string getEmail() const;
-    std::string getTelefono() const;
-    std::string getDireccion() const;
-    
+    const std::string& getDui() const;
+    const std::string& getNombre() const;
+    const std::string& getApellido() const;
+    const std::string& getEmail() const;
+    const std::string& getTelefono() const;
+    const std::string& getDireccion() const;
+
     // Setters
-    void setDui(std::string dui);
-    void setNombre(std::string nombre);
-    void setApellido(std::string apellido);
-    void setEmail(std::string email);
-    void setTelefono(std::string telefono);
-    void setDireccion(std::string direccion);
-    
-    // Métodos virtuales
-     virtual void mostrarInfo() const;
-    
+    void setDui(const std::string& dui);
+    void setNombre(const std::string& nombre);
+    void setApellido(const std::string& apellido);
+    void setEmail(const std::string& email);
+    void setTelefono(const std::string& telefono);
+    void setDireccion(const std::string& direccion);
+
+    virtual void mostrarInfo() const;
+    virtual ~Persona() = default;
 };
-/* LISTADO DE METODOS
-  -Constructor 
-  -getters y setters
-  -Validación de credenciales
-  -mostrarInfo() este se usa para mostrar un menú dependiendo
-  si eres un Administrador o un usuario
-*/

@@ -1,26 +1,32 @@
-#include "Persona.hpp"
+#pragma once
+
 #include <string>
 
-class administrador : public Persona {
+#include "../Entidades/Persona.hpp"
+
+class Administrador : public Persona {
 private:
-    std::string usuario;
-    std::string fechaContratacion;
+    std::string usuario_;
+    std::string fechaContratacion_;
+    std::string departamento_;
 
 public:
-    // Constructores
-    administrador();
-    administrador(std::string dui, std::string nombre, std::string apellido, 
-                  std::string email, std::string telefono, std::string direccion,
-                  std::string usuario);
+    Administrador();
+    Administrador(std::string dui,
+                  std::string nombre,
+                  std::string apellido,
+                  std::string email,
+                  std::string telefono,
+                  std::string direccion,
+                  std::string usuario,
+                  std::string departamento = "SISTEMAS");
 
-    // Getters
-    std::string getUsuario() const;
-    std::string getFechaContratacion() const;
+    const std::string& getUsuario() const;
+    const std::string& getFechaContratacion() const;
+    const std::string& getDepartamento() const;
 
-    // Setter
-    void setUsuario(std::string usuario);
+    void setUsuario(const std::string& usuario);
+    void setDepartamento(const std::string& departamento);
 
-
-    // Sobrescribir método de Persona
     void mostrarInfo() const override;
 };

@@ -1,140 +1,145 @@
 #include "controlSistema.hpp"
-#include <iostream>
+
 #include <cstdlib>
+#include <iostream>
+#include <limits>
 
-using namespace std;
+ControlSistema::ControlSistema()
+    : arbolClientes_(std::make_unique<ArbolB>()),
+      sistemaActivo_(false),
+      usuarioActual_(),
+      esAdministrador_(false),
+      reporte_() {}
 
-// Constructor
-ControlSistema::ControlSistema() {
-    arbolClientes = new ArbolB();  // Solo inicializamos el árbol de clientes
-    sistemaActivo = false;
-    usuarioActual = "";
-    esAdministrador = false;
-}
-
-// Iniciar el sistema
 void ControlSistema::IniciarSistema() {
-    sistemaActivo = true;
-    cout << "=== SISTEMA BANCARIO INICIADO ===" << endl;
-    cout << "Arbol B de Clientes cargado" << endl << endl;
+    sistemaActivo_ = true;
+    std::cout << "=== SISTEMA BANCARIO INICIADO ===" << std::endl;
+    if (reporte_.cargarClientes(*arbolClientes_)) {
+        std::cout << "Clientes cargados desde persistencia." << std::endl;
+    } else {
+        std::cout << "No se encontraron clientes almacenados." << std::endl;
+    }
+    std::cout << std::endl;
 }
 
-// Cerrar el sistema
 void ControlSistema::CerrarSistema() {
-    sistemaActivo = false;
-    cout << "=== SISTEMA BANCARIO CERRADO ===" << endl;
+    sistemaActivo_ = false;
+    std::cout << "=== SISTEMA BANCARIO CERRADO ===" << std::endl;
 }
 
-// Método principal de ejecución
 void ControlSistema::Ejecutar() {
     IniciarSistema();
-    
-    while (sistemaActivo) {
+
+    while (sistemaActivo_) {
         if (!hayUsuarioLogueado()) {
-            mostrarMenuPrincipal();
+            if (!mostrarMenuPrincipal()) {
+                continue;
+            }
             if (!validarUsuario()) {
                 continue;
             }
         }
-        
-        // Usuario válido - mostrar menu según tipo
-        if (esAdministrador) {
+
+        if (esAdministrador_) {
             menuAdmin();
         } else {
             menuCliente();
         }
     }
-    
+
     CerrarSistema();
 }
 
-// Validar usuario 
 bool ControlSistema::validarUsuario() {
-    string usuario, password;
-    
-    cout << "=== INICIO DE SESION ===" << endl;
-    cout << "Usuario: ";
-    cin >> usuario;
-    cout << "Password: ";
-    cin >> password;
-    
-    // Validación simple - puedes conectar esto con el árbol después
-    if (usuario == "admin" && password == "admin") {
-        usuarioActual = usuario;
-        esAdministrador = true;
-        cout << "Bienvenido Administrador!" << endl;
-    } else if (usuario == "cliente" && password == "cliente") {
-        usuarioActual = usuario;
-        esAdministrador = false;
-        cout << "Bienvenido Cliente!" << endl;
+    std::string usuario;
+    std::string password;
+
+    std::cout << "=== INICIO DE SESION ===" << std::endl;
+    std::cout << "Usuario: ";
+    std::cin >> usuario;
+    std::cout << "Password: ";
+    std::cin >> password;
+
+    if (reporte_.verificarAdmin(usuario, password)) {
+        usuarioActual_ = usuario;
+        esAdministrador_ = true;
+        std::cout << "Bienvenido Administrador!" << std::endl;
+    } else if (reporte_.verificarCliente(usuario, password)) {
+        usuarioActual_ = usuario;
+        esAdministrador_ = false;
+        std::cout << "Bienvenido Cliente!" << std::endl;
     } else {
-        // Podrías buscar en el árbol de clientes aquí
-        cout << "Error: Credenciales incorrectas." << endl;
+        std::cout << "Error: Credenciales incorrectas." << std::endl;
         pausarPantalla();
         return false;
     }
-    
+
     pausarPantalla();
     return true;
 }
 
-// Menú para clientes (operaciones básicas)
 void ControlSistema::menuCliente() {
-    int opcion;
-    
+    int opcion = 0;
+
     do {
-        system("cls");
-        cout << "=== MENU CLIENTE ===" << endl;
-        cout << "Usuario: " << usuarioActual << endl;
-        cout << "1. Consultar mis datos" << endl;
-        cout << "2. Realizar transaccion" << endl;
-        cout << "3. Ver historial" << endl;
-        cout << "4. Cerrar sesion" << endl;
-        cout << "Seleccione una opcion: ";
-        cin >> opcion;
-        
+        std::system("clear");
+        std::cout << "=== MENU CLIENTE ===" << std::endl;
+        std::cout << "Usuario: " << usuarioActual_ << std::endl;
+        std::cout << "1. Consultar mis datos" << std::endl;
+        std::cout << "2. Ver reporte de clientes" << std::endl;
+        std::cout << "3. Cerrar sesion" << std::endl;
+        std::cout << "Seleccione una opcion: ";
+        std::cin >> opcion;
+
         switch (opcion) {
-            case 1:
-                cout << "Consultando datos del cliente..." << endl;
-                // arbolClientes->buscar(usuarioActual);
+            case 1: {
+                Cliente cliente;
+                if (arbolClientes_->buscar(usuarioActual_, cliente)) {
+                    cliente.mostrarInfo();
+                } else {
+                    std::cout << "No se encontró información del cliente." << std::endl;
+                }
                 break;
+            }
             case 2:
-                cout << "Realizando transaccion..." << endl;
+                if (reporte_.generarReporteClientes(*arbolClientes_)) {
+                    std::cout << "Reporte generado correctamente." << std::endl;
+                } else {
+                    std::cout << "No fue posible generar el reporte." << std::endl;
+                }
                 break;
             case 3:
-                cout << "Mostrando historial..." << endl;
-                break;
-            case 4:
                 cerrarSesion();
                 break;
             default:
-                cout << "Opcion invalida." << endl;
+                std::cout << "Opción inválida." << std::endl;
+                break;
         }
-        
-        if (opcion != 4) {
+
+        if (opcion != 3) {
             pausarPantalla();
         }
-        
-    } while (hayUsuarioLogueado() && !esAdministrador);
+
+    } while (hayUsuarioLogueado() && !esAdministrador_);
 }
 
-// Menú para administradores (gestión del árbol B)
 void ControlSistema::menuAdmin() {
-    int opcion;
-    
+    int opcion = 0;
+
     do {
-        system("cls");
-        cout << "=== MENU ADMINISTRADOR ===" << endl;
-        cout << "Usuario: " << usuarioActual << endl;
-        cout << "1. Gestionar Clientes (Arbol B)" << endl;
-        cout << "2. Buscar Cliente" << endl;
-        cout << "3. Mostrar Reportes" << endl;
-        cout << "4. Operaciones del Arbol" << endl;
-        cout << "5. Cerrar sesion" << endl;
-        cout << "6. Salir del sistema" << endl;
-        cout << "Seleccione una opcion: ";
-        cin >> opcion;
-        
+        std::system("clear");
+        std::cout << "=== MENU ADMINISTRADOR ===" << std::endl;
+        std::cout << "Usuario: " << usuarioActual_ << std::endl;
+        std::cout << "1. Gestionar Clientes" << std::endl;
+        std::cout << "2. Buscar Cliente" << std::endl;
+        std::cout << "3. Mostrar Reportes" << std::endl;
+        std::cout << "4. Operaciones del Arbol" << std::endl;
+        std::cout << "5. Guardar Clientes" << std::endl;
+        std::cout << "6. Cerrar sesion" << std::endl;
+        std::cout << "7. Salir del sistema" << std::endl;
+        std::cout << "Seleccione una opcion: ";
+        std::cin >> opcion;
+
         switch (opcion) {
             case 1:
                 gestionarClientes();
@@ -149,117 +154,218 @@ void ControlSistema::menuAdmin() {
                 operacionesArbol();
                 break;
             case 5:
-                cerrarSesion();
+                if (reporte_.guardarClientes(*arbolClientes_)) {
+                    std::cout << "Clientes guardados correctamente." << std::endl;
+                } else {
+                    std::cout << "No fue posible guardar los clientes." << std::endl;
+                }
+                pausarPantalla();
                 break;
             case 6:
+                cerrarSesion();
+                break;
+            case 7:
                 CerrarSistema();
                 break;
             default:
-                cout << "Opcion invalida." << endl;
+                std::cout << "Opción inválida." << std::endl;
+                pausarPantalla();
+                break;
         }
-        
-    } while (hayUsuarioLogueado() && esAdministrador && opcion != 5 && opcion != 6);
+
+    } while (hayUsuarioLogueado() && esAdministrador_ && opcion != 6 && opcion != 7);
 }
 
-// Gestión de clientes usando el árbol B
 void ControlSistema::gestionarClientes() {
-    int opcion;
-    
+    int opcion = 0;
+
     do {
-        system("cls");
-        cout << "=== GESTION DE CLIENTES ===" << endl;
-        cout << "1. Insertar cliente" << endl;
-        cout << "2. Eliminar cliente" << endl;
-        cout << "3. Mostrar todos los clientes" << endl;
-        cout << "4. Volver al menu anterior" << endl;
-        cout << "Seleccione una opcion: ";
-        cin >> opcion;
-        
+        std::system("clear");
+        std::cout << "=== GESTION DE CLIENTES ===" << std::endl;
+        std::cout << "1. Insertar cliente" << std::endl;
+        std::cout << "2. Mostrar todos los clientes" << std::endl;
+        std::cout << "3. Volver" << std::endl;
+        std::cout << "Seleccione una opcion: ";
+        std::cin >> opcion;
+
         switch (opcion) {
-            case 1:
-                cout << "Insertando cliente en el arbol B..." << endl;
-                // arbolClientes->insertar(nuevoCliente);
+            case 1: {
+                std::string dui, nombre, apellido, email, telefono, direccion;
+                std::cout << "DUI: ";
+                std::cin >> dui;
+                std::cout << "Nombre: ";
+                std::cin >> nombre;
+                std::cout << "Apellido: ";
+                std::cin >> apellido;
+                std::cout << "Email: ";
+                std::cin >> email;
+                std::cout << "Telefono: ";
+                std::cin >> telefono;
+                std::cout << "Direccion: ";
+                std::cin >> direccion;
+
+                Cliente cliente(dui, nombre, apellido, email, telefono, direccion);
+                if (arbolClientes_->insertar(cliente)) {
+                    std::cout << "Cliente insertado." << std::endl;
+                } else {
+                    std::cout << "Cliente actualizado." << std::endl;
+                }
                 break;
+            }
             case 2:
-                cout << "Eliminando cliente del arbol B..." << endl;
-                // arbolClientes->eliminar(clienteId);
+                arbolClientes_->imprimir(std::cout);
                 break;
             case 3:
-                cout << "Mostrando clientes del arbol B..." << endl;
-                // arbolClientes->recorrer();
-                break;
-            case 4:
                 return;
             default:
-                cout << "Opcion invalida." << endl;
+                std::cout << "Opción inválida." << std::endl;
+                break;
         }
-        
+
         pausarPantalla();
-    } while (opcion != 4);
+    } while (opcion != 3);
 }
 
-// Buscar cliente en el árbol B
 void ControlSistema::buscarCliente() {
-    string criterio;
-    cout << "=== BUSCAR CLIENTE ===" << endl;
-    cout << "Ingrese ID o nombre del cliente: ";
-    cin >> criterio;
-    
-    cout << "Buscando cliente en el arbol B..." << endl;
-    // bool encontrado = arbolClientes->buscar(criterio);
-    // if (encontrado) { ... } else { ... }
-    
+    std::string dui;
+    std::cout << "=== BUSCAR CLIENTE ===" << std::endl;
+    std::cout << "Ingrese el DUI del cliente: ";
+    std::cin >> dui;
+
+    Cliente cliente;
+    if (arbolClientes_->buscar(dui, cliente)) {
+        cliente.mostrarInfo();
+    } else {
+        std::cout << "Cliente no encontrado." << std::endl;
+    }
+
     pausarPantalla();
 }
 
-// Mostrar reportes del árbol
 void ControlSistema::mostrarReportes() {
-    cout << "=== REPORTES DEL ARBOL B ===" << endl;
-    // cout << "Total clientes: " << arbolClientes->contarNodos() << endl;
-    // cout << "Altura del arbol: " << arbolClientes->obtenerAltura() << endl;
-    // arbolClientes->mostrarEstadisticas();
-    
+    std::cout << "=== REPORTES DEL ARBOL B ===" << std::endl;
+    std::cout << "Total clientes: " << arbolClientes_->obtenerCantidad() << std::endl;
+    if (reporte_.generarReporteClientes(*arbolClientes_)) {
+        std::cout << "Reporte de clientes generado en " << "data/reporte_sistema.txt" << std::endl;
+    } else {
+        std::cout << "No fue posible generar el reporte." << std::endl;
+    }
     pausarPantalla();
 }
 
-// Operaciones específicas del árbol B
 void ControlSistema::operacionesArbol() {
-    cout << "=== OPERACIONES DEL ARBOL B ===" << endl;
-    cout << "Mostrando estructura del arbol de clientes..." << endl;
-    // arbolClientes->mostrarEstructura();
-    
+    std::cout << "=== OPERACIONES DEL ARBOL B ===" << std::endl;
+    arbolClientes_->imprimir(std::cout);
     pausarPantalla();
 }
 
-// Métodos auxiliares (se mantienen igual)
-void ControlSistema::mostrarMenuPrincipal() {
-    system("cls");
-    cout << "=== SISTEMA BANCARIO ===" << endl;
-    cout << "1. Iniciar sesion" << endl;
-    cout << "2. Salir del sistema" << endl;
-    cout << "Seleccione una opcion: ";
-    
-    int opcion;
-    cin >> opcion;
-    
-    if (opcion == 2) {
-        CerrarSistema();
+bool ControlSistema::mostrarMenuPrincipal() {
+    std::system("clear");
+    std::cout << "=== SISTEMA BANCARIO ===" << std::endl;
+    std::cout << "1. Iniciar sesion" << std::endl;
+    std::cout << "2. Crear usuario" << std::endl;
+    std::cout << "3. Salir del sistema" << std::endl;
+    std::cout << "Seleccione una opcion: ";
+
+    int opcion = 0;
+    std::cin >> opcion;
+
+    switch (opcion) {
+        case 1:
+            return true;
+        case 2:
+            registrarNuevoCliente();
+            return false;
+        case 3:
+            CerrarSistema();
+            return false;
+        default:
+            std::cout << "Opción inválida." << std::endl;
+            pausarPantalla();
+            return false;
     }
 }
 
+bool ControlSistema::registrarNuevoCliente() {
+    std::system("clear");
+    std::cout << "=== CREAR NUEVO USUARIO ===" << std::endl;
+
+    std::string dui;
+    std::cout << "DUI: ";
+    std::cin >> dui;
+
+    Cliente existente;
+    if (arbolClientes_->buscar(dui, existente)) {
+        std::cout << "Ya existe un cliente registrado con ese DUI." << std::endl;
+        pausarPantalla();
+        return false;
+    }
+
+    if (reporte_.existeCredencialCliente(dui)) {
+        std::cout << "Ya existen credenciales asociadas a ese DUI. Contacte al administrador." << std::endl;
+        pausarPantalla();
+        return false;
+    }
+
+    std::string nombre;
+    std::string apellido;
+    std::string email;
+    std::string telefono;
+    std::string direccion;
+    std::string password;
+
+    std::cout << "Nombre: ";
+    std::cin >> nombre;
+    std::cout << "Apellido: ";
+    std::cin >> apellido;
+    std::cout << "Email: ";
+    std::cin >> email;
+    std::cout << "Telefono: ";
+    std::cin >> telefono;
+    std::cout << "Direccion: ";
+    std::cin >> direccion;
+    std::cout << "Password: ";
+    std::cin >> password;
+
+    Cliente nuevoCliente(dui, nombre, apellido, email, telefono, direccion);
+    const bool insertado = arbolClientes_->insertar(nuevoCliente);
+    if (!insertado) {
+        std::cout << "No se pudo registrar al nuevo cliente." << std::endl;
+        pausarPantalla();
+        return false;
+    }
+
+    const bool clientesGuardados = reporte_.guardarClientes(*arbolClientes_);
+    const bool credencialesGuardadas = reporte_.guardarCredencialesCliente(dui, password);
+
+    if (clientesGuardados && credencialesGuardadas) {
+        std::cout << "Usuario creado correctamente. Ya puede iniciar sesion." << std::endl;
+    } else {
+        if (!clientesGuardados) {
+            std::cout << "Advertencia: no se pudo actualizar el archivo de clientes." << std::endl;
+        }
+        if (!credencialesGuardadas) {
+            std::cout << "Error: no se pudieron guardar las credenciales. Contacte al administrador." << std::endl;
+        }
+    }
+
+    pausarPantalla();
+    return clientesGuardados && credencialesGuardadas;
+}
+
 void ControlSistema::cerrarSesion() {
-    cout << "Cerrando sesion de " << usuarioActual << "..." << endl;
-    usuarioActual = "";
-    esAdministrador = false;
+    std::cout << "Cerrando sesion de " << usuarioActual_ << "..." << std::endl;
+    usuarioActual_.clear();
+    esAdministrador_ = false;
     pausarPantalla();
 }
 
-bool ControlSistema::hayUsuarioLogueado() {
-    return !usuarioActual.empty();
+bool ControlSistema::hayUsuarioLogueado() const {
+    return !usuarioActual_.empty();
 }
 
 void ControlSistema::pausarPantalla() {
-    cout << endl << "Presione Enter para continuar...";
-    cin.ignore();
-    cin.get();
+    std::cout << std::endl << "Presione Enter para continuar...";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.get();
 }
