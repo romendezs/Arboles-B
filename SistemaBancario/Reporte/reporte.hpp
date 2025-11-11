@@ -23,8 +23,10 @@ private:
     static std::string rutaTransacciones(const std::string& dui);
 
 public:
-    explicit Reporte(std::string nombreArchivo = "data/reporte_sistema.txt");
+    explicit Reporte(std::string nombreArchivo = {});
     ~Reporte();
+
+    const std::string& obtenerRutaReporte() const;
 
     bool generarReporteClientes(const ArbolB& arbolClientes);
 

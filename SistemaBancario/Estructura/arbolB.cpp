@@ -48,6 +48,10 @@ bool ArbolB::buscar(const std::string& dui, Cliente& resultado) const {
     return true;
 }
 
+Cliente* ArbolB::obtenerCliente(const std::string& dui) {
+    return buscarInterno(dui, raiz_.get());
+}
+
 bool ArbolB::eliminar(const std::string& dui) {
     if (!raiz_) {
         return false;
