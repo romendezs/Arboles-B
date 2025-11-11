@@ -36,11 +36,20 @@ fs::path baseDatos() {
 }
 }
 
-Reporte::Reporte(std::string nombreArchivo)
-    : nombreArchivo_(std::move(nombreArchivo)) {}
+Reporte::Reporte(std::string nombreArchivo) {
+    if (nombreArchivo.empty()) {
+        nombreArchivo_ = (baseDatos() / "reportes" / "reporte_sistema.txt").string();
+    } else {
+        nombreArchivo_ = std::move(nombreArchivo);
+    }
+}
 
 Reporte::~Reporte() {
     cerrarArchivo();
+}
+
+const std::string& Reporte::obtenerRutaReporte() const {
+    return nombreArchivo_;
 }
 
 bool Reporte::abrirArchivo(std::ios_base::openmode modo) {

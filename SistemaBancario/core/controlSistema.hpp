@@ -38,4 +38,16 @@ private:
     void cerrarSesion();
     bool hayUsuarioLogueado() const;
     void pausarPantalla();
+    void realizarDeposito();
+    void realizarRetiro();
+    void realizarTransferencia();
+    Cliente* obtenerClienteEnSesion();
+    bool asegurarCuentaActiva(Cliente& cliente);
+    void registrarTransaccion(const std::string& dui,
+                              const std::string& numeroCuenta,
+                              const std::string& tipo,
+                              double monto,
+                              const std::string& estado);
+    std::string generarIdTransaccion() const;
+    std::string obtenerFechaHoraActual() const;
 };

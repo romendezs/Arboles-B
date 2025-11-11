@@ -43,6 +43,7 @@ public:
 
     bool insertar(const Cliente& cliente);
     bool buscar(const std::string& dui, Cliente& resultado) const;
+    Cliente* obtenerCliente(const std::string& dui);
     bool eliminar(const std::string& dui);
     bool estaVacio() const;
     std::size_t obtenerCantidad() const;
