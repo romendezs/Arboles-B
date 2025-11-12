@@ -1,6 +1,8 @@
 #include "controlSistema.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
@@ -9,6 +11,7 @@
 #include <memory>
 #include <random>
 #include <sstream>
+#include <string>
 
 ControlSistema::ControlSistema()
     : arbolClientes_(std::make_unique<ArbolB>()),
@@ -199,8 +202,9 @@ void ControlSistema::gestionarClientes() {
         std::system("clear");
         std::cout << "=== GESTION DE CLIENTES ===" << std::endl;
         std::cout << "1. Insertar cliente" << std::endl;
-        std::cout << "2. Mostrar todos los clientes" << std::endl;
-        std::cout << "3. Volver" << std::endl;
+        std::cout << "2. Eliminar cliente" << std::endl;
+        std::cout << "3. Mostrar todos los clientes" << std::endl;
+        std::cout << "4. Volver" << std::endl;
         std::cout << "Seleccione una opcion: ";
         std::cin >> opcion;
 
@@ -223,15 +227,43 @@ void ControlSistema::gestionarClientes() {
                 Cliente cliente(dui, nombre, apellido, email, telefono, direccion);
                 if (arbolClientes_->insertar(cliente)) {
                     std::cout << "Cliente insertado." << std::endl;
+
+                    std::string password = nombre;
+                    std::transform(password.begin(), password.end(), password.begin(),
+                                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                    password += "123";
+
+                    reporte_.eliminarCredencialesCliente(dui);
+                    if (reporte_.guardarCredencialesCliente(dui, password)) {
+                        std::cout << "Credenciales generadas. Usuario: " << dui
+                                  << " Password: " << password << std::endl;
+                    } else {
+                        std::cout << "No fue posible generar las credenciales del cliente." << std::endl;
+                    }
                 } else {
                     std::cout << "Cliente actualizado." << std::endl;
                 }
                 break;
             }
-            case 2:
+            case 2: {
+                std::string dui;
+                std::cout << "Ingrese el DUI del cliente a eliminar: ";
+                std::cin >> dui;
+
+                if (arbolClientes_->eliminar(dui)) {
+                    std::cout << "Cliente eliminado del sistema." << std::endl;
+                    if (reporte_.eliminarCredencialesCliente(dui)) {
+                        std::cout << "Credenciales del cliente eliminadas." << std::endl;
+                    }
+                } else {
+                    std::cout << "No se encontró un cliente con el DUI proporcionado." << std::endl;
+                }
+                break;
+            }
+            case 3:
                 arbolClientes_->imprimir(std::cout);
                 break;
-            case 3:
+            case 4:
                 return;
             default:
                 std::cout << "Opción inválida." << std::endl;
@@ -239,7 +271,7 @@ void ControlSistema::gestionarClientes() {
         }
 
         pausarPantalla();
-    } while (opcion != 3);
+    } while (opcion != 4);
 }
 
 void ControlSistema::buscarCliente() {

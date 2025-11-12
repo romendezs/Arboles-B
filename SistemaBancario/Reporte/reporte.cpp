@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -279,4 +280,53 @@ bool Reporte::verificarAdmin(const std::string& usuario, const std::string& pass
         }
     }
     return false;
+}
+
+bool Reporte::eliminarCredencialesCliente(const std::string& dui) const {
+    const fs::path ruta = rutaCredencialesClientes();
+    std::ifstream archivo(ruta);
+    if (!archivo.is_open()) {
+        return false;
+    }
+
+    const std::string objetivo = encriptar(dui);
+    std::vector<std::string> lineas;
+    std::string linea;
+    bool eliminado = false;
+
+    while (std::getline(archivo, linea)) {
+        const std::size_t separador = linea.find('|');
+        if (separador == std::string::npos) {
+            if (!linea.empty()) {
+                lineas.push_back(linea);
+            }
+            continue;
+        }
+
+        const std::string duiGuardado = linea.substr(0, separador);
+        if (duiGuardado == objetivo) {
+            eliminado = true;
+            continue;
+        }
+
+        lineas.push_back(linea);
+    }
+
+    archivo.close();
+
+    if (!eliminado) {
+        return false;
+    }
+
+    fs::create_directories(ruta.parent_path());
+    std::ofstream salida(ruta, std::ios::out | std::ios::trunc);
+    if (!salida.is_open()) {
+        return false;
+    }
+
+    for (const auto& restante : lineas) {
+        salida << restante << '\n';
+    }
+
+    return true;
 }
