@@ -36,7 +36,12 @@ private:
     std::pair<std::string, Cliente> obtenerPredecesor(Nodo* nodo, std::size_t indice) const;
     std::pair<std::string, Cliente> obtenerSucesor(Nodo* nodo, std::size_t indice) const;
     void recorrerInorden(const Nodo* nodo, const std::function<void(const Cliente&)>& accion) const;
+    void recorrerPreorden(const Nodo* nodo, const std::function<void(const Cliente&)>& accion) const;
+    void recorrerPostorden(const Nodo* nodo, const std::function<void(const Cliente&)>& accion) const;
     void recolectarInorden(const Nodo* nodo, std::vector<Cliente>& acumulador) const;
+    void imprimirRecorrido(
+        std::ostream& salida,
+        const std::function<void(const Nodo*, const std::function<void(const Cliente&)>&)>& recorrido) const;
 
 public:
     ArbolB() = default;
@@ -49,6 +54,9 @@ public:
     std::size_t obtenerCantidad() const;
 
     void imprimir(std::ostream& salida) const;
+    void imprimirInorden(std::ostream& salida) const;
+    void imprimirPreorden(std::ostream& salida) const;
+    void imprimirPostorden(std::ostream& salida) const;
     void imprimirEnArchivo(std::ostream& archivo) const;
 
     std::vector<Cliente> obtenerClientes() const;
