@@ -41,4 +41,5 @@ public:
     bool guardarCredencialesAdmin(const std::string& usuario, const std::string& password) const;
     bool verificarCliente(const std::string& dui, const std::string& password) const;
     bool verificarAdmin(const std::string& usuario, const std::string& password) const;
+    bool eliminarCredencialesCliente(const std::string& dui) const;
 };
