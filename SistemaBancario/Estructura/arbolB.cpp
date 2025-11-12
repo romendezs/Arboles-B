@@ -80,31 +80,27 @@ std::size_t ArbolB::obtenerCantidad() const {
     return cantidad_;
 }
 
-void ArbolB::imprimir(std::ostream& salida) const {
-    if (!raiz_) {
-        salida << "Árbol vacío" << std::endl;
-        return;
-    }
+void ArbolB::imprimir(std::ostream& salida) const { imprimirInorden(salida); }
 
-    salida << std::left << std::setw(12) << "DUI" << std::setw(20) << "Nombre"
-           << std::setw(20) << "Apellido" << std::setw(12) << "Estado"
-           << std::setw(12) << "Saldo" << std::endl;
-    salida << std::string(76, '-') << std::endl;
-
-    recorrerInorden(raiz_.get(), [&salida](const Cliente& cliente) {
-        double saldo = cliente.consultarSaldo();
-        salida << std::left << std::setw(12) << cliente.getDui()
-               << std::setw(20) << cliente.getNombre()
-               << std::setw(20) << cliente.getApellido()
-               << std::setw(12) << cliente.getEstado()
-               << std::setw(12) << std::fixed << std::setprecision(2) << saldo
-               << std::endl;
+void ArbolB::imprimirInorden(std::ostream& salida) const {
+    imprimirRecorrido(salida, [this](const Nodo* nodo, const std::function<void(const Cliente&)>& accion) {
+        recorrerInorden(nodo, accion);
     });
 }
 
-void ArbolB::imprimirEnArchivo(std::ostream& archivo) const {
-    imprimir(archivo);
+void ArbolB::imprimirPreorden(std::ostream& salida) const {
+    imprimirRecorrido(salida, [this](const Nodo* nodo, const std::function<void(const Cliente&)>& accion) {
+        recorrerPreorden(nodo, accion);
+    });
 }
+
+void ArbolB::imprimirPostorden(std::ostream& salida) const {
+    imprimirRecorrido(salida, [this](const Nodo* nodo, const std::function<void(const Cliente&)>& accion) {
+        recorrerPostorden(nodo, accion);
+    });
+}
+
+void ArbolB::imprimirEnArchivo(std::ostream& archivo) const { imprimirInorden(archivo); }
 
 std::vector<Cliente> ArbolB::obtenerClientes() const {
     std::vector<Cliente> resultado;
@@ -359,6 +355,61 @@ void ArbolB::recorrerInorden(const Nodo* nodo, const std::function<void(const Cl
     }
 }
 
+void ArbolB::recorrerPreorden(const Nodo* nodo, const std::function<void(const Cliente&)>& accion) const {
+    if (!nodo) {
+        return;
+    }
+
+    for (const auto& valor : nodo->valores) {
+        accion(valor);
+    }
+
+    if (!nodo->esHoja) {
+        for (const auto& hijo : nodo->hijos) {
+            recorrerPreorden(hijo.get(), accion);
+        }
+    }
+}
+
+void ArbolB::recorrerPostorden(const Nodo* nodo, const std::function<void(const Cliente&)>& accion) const {
+    if (!nodo) {
+        return;
+    }
+
+    if (!nodo->esHoja) {
+        for (const auto& hijo : nodo->hijos) {
+            recorrerPostorden(hijo.get(), accion);
+        }
+    }
+
+    for (const auto& valor : nodo->valores) {
+        accion(valor);
+    }
+}
+
 void ArbolB::recolectarInorden(const Nodo* nodo, std::vector<Cliente>& acumulador) const {
     recorrerInorden(nodo, [&acumulador](const Cliente& cliente) { acumulador.push_back(cliente); });
+}
+
+void ArbolB::imprimirRecorrido(
+    std::ostream& salida,
+    const std::function<void(const Nodo*, const std::function<void(const Cliente&)>&)>& recorrido) const {
+    if (!raiz_) {
+        salida << "Árbol vacío" << std::endl;
+        return;
+    }
+
+    salida << std::left << std::setw(12) << "DUI" << std::setw(20) << "Nombre"
+           << std::setw(20) << "Apellido" << std::setw(12) << "Estado"
+           << std::setw(12) << "Saldo" << std::endl;
+    salida << std::string(76, '-') << std::endl;
+
+    recorrido(raiz_.get(), [&salida](const Cliente& cliente) {
+        double saldo = cliente.consultarSaldo();
+        salida << std::left << std::setw(12) << cliente.getDui()
+               << std::setw(20) << cliente.getNombre()
+               << std::setw(20) << cliente.getApellido()
+               << std::setw(12) << cliente.getEstado()
+               << std::setw(12) << std::fixed << std::setprecision(2) << saldo << std::endl;
+    });
 }

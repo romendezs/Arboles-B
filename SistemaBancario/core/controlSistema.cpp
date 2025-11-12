@@ -97,7 +97,8 @@ void ControlSistema::menuCliente() {
         std::cout << "3. Retirar fondos" << std::endl;
         std::cout << "4. Transferir fondos" << std::endl;
         std::cout << "5. Ver reporte de clientes" << std::endl;
-        std::cout << "6. Cerrar sesion" << std::endl;
+        std::cout << "6. Operaciones del arbol" << std::endl;
+        std::cout << "7. Cerrar sesion" << std::endl;
         std::cout << "Seleccione una opcion: ";
         std::cin >> opcion;
 
@@ -128,6 +129,9 @@ void ControlSistema::menuCliente() {
                 }
                 break;
             case 6:
+                operacionesArbol();
+                break;
+            case 7:
                 cerrarSesion();
                 break;
             default:
@@ -135,7 +139,7 @@ void ControlSistema::menuCliente() {
                 break;
         }
 
-        if (opcion != 6) {
+        if (opcion != 7 && opcion != 6) {
             pausarPantalla();
         }
 
@@ -303,9 +307,40 @@ void ControlSistema::mostrarReportes() {
 }
 
 void ControlSistema::operacionesArbol() {
-    std::cout << "=== OPERACIONES DEL ARBOL B ===" << std::endl;
-    arbolClientes_->imprimir(std::cout);
-    pausarPantalla();
+    int opcion = 0;
+
+    do {
+        std::system("clear");
+        std::cout << "=== OPERACIONES DEL ARBOL B ===" << std::endl;
+        std::cout << "1. Recorrido en preorden" << std::endl;
+        std::cout << "2. Recorrido en inorden" << std::endl;
+        std::cout << "3. Recorrido en postorden" << std::endl;
+        std::cout << "4. Regresar" << std::endl;
+        std::cout << "Seleccione una opcion: ";
+        std::cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                arbolClientes_->imprimirPreorden(std::cout);
+                pausarPantalla();
+                break;
+            case 2:
+                arbolClientes_->imprimirInorden(std::cout);
+                pausarPantalla();
+                break;
+            case 3:
+                arbolClientes_->imprimirPostorden(std::cout);
+                pausarPantalla();
+                break;
+            case 4:
+                break;
+            default:
+                std::cout << "Opción inválida." << std::endl;
+                pausarPantalla();
+                break;
+        }
+
+    } while (opcion != 4);
 }
 
 Cliente* ControlSistema::obtenerClienteEnSesion() {
